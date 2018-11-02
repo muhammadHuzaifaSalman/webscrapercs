@@ -210,36 +210,45 @@ namespace WebScraperModularized.parsers{
         }
 
         private List<Review> getReviews(HtmlNode row){
-            List<Review> reviews = new List<Review>();
-            if(row!=null){
-                HtmlNodeCollection reviewsCollection = row.SelectNodes(".//div[contains(@class,\"reviewContainer\")]");
-                foreach(HtmlNode reviewNode in reviewsCollection){
-                    Review review = new Review();
-                    HtmlNode titleH4 = reviewNode.SelectSingleNode(".//h4");
-                    if(titleH4!=null){
-                        review.title = titleH4.InnerHtml;
+
+            List<Review> listOfReviews = new List<Review>();
+            HtmlNode pageNext = row.SelectSingleNode(".//span[contains(@data-bind, \"nextPageEnabled\")]");
+
+            if(row != null)
+            {
+                while(pageNext != null)
+                {
+                    HtmlNodeCollection currentReviews = row.SelectNodes(".//div[contains(@class, \"reviewContainer\")]");
+
+                    foreach (HtmlNode review in currentReviews)
+                    {
+                        Review newReview = new Review();
+
+                        newReview.rating = (int)(review.SelectSingleNode(".//div/span[contains(@data-bind = \"content\")]/@content").Value);
+
+                        newReview.title = review.SelectSingleNode(".//h4[@class = \"reviewTitle\""]).InnerHtml;
+
+                        newReview.content = review.SelectSingleNode(".//div/p/span[contains(@data-bind = \"reviewTextFull\")]").InnerHtml;
+
+                        //Helpful Count?
+
+                        //what are id and property meant to do?
+
+                        listOfReviews.add(newReview);
                     }
-
-                    HtmlNode descriptionP = reviewNode.SelectSingleNode(".//div[contains(@class, \"reviewTextContainer\")]/p/span");
-                    if(descriptionP!=null){
-                        review.content = descriptionP.InnerHtml.Trim();
-                    }
-
-                    /*Helpful count needs js to be enabled. To-do later. *//*HtmlNode helpfulNode = reviewNode.SelectSingleNode(".//div[contains(@class, \"helpful\")]");
-                    if(helpfulNode!=null){
-                        review.helpful = Util.parseInt(helpfulNode.InnerHtml.Substring(0,1), 0);
-                    }*/
-
-                    HtmlNode ratingSpan = reviewNode.SelectSingleNode(".//div[contains(@class, \"reviewRatingDaysSincePostedContainer\")]/span");
-                    if(ratingSpan!=null){
-                        review.rating = ratingSpan.GetAttributeValue("content", 0);
-                    }
-
-                    review.property = myUrl.property;
-                    reviews.Add(review);
+                    
+                    //How to get to next slide of reviews?
+                    pageNext = row.SelectSingleNode(".//span[contains(@data-bind, \"nextPageEnabled\")]");
                 }
             }
-            return reviews;
+
+            return listOfReviews;
+
+            /* Difference between mine and coded method. They checked whether the Nodes were Null.
+               They used the Util class to parse their helpful Count
+               Property was meant to be the same as apartment property.
+               Was id meant to be left alone for database?
+               What I learned? XPath, Null checking, a bit about working in a team */           
         }
 
         private List<School> getSchools(HtmlNode row){
